@@ -745,6 +745,7 @@ input:disabled {
   background: rgba(0, 0, 0, 0.75);
   z-index: 999;
   animation: fadeIn 0.3s ease;
+  pointer-events: none;
 }
 
 .onboarding-card {
@@ -755,6 +756,7 @@ input:disabled {
   max-width: 480px;
   width: 90%;
   text-align: center;
+  pointer-events: auto;
 }
 
 .onboarding-step-indicator {
