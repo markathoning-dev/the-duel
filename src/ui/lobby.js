@@ -1,4 +1,9 @@
-export function createLobbyScreen(container, onGameStart) {
+/**
+ * Lobby screen — enter your name, pick difficulty, start duel.
+ * Single-player vs AI opponent. No networking needed.
+ */
+
+export function createLobbyScreen(container, onStartGame) {
   container.innerHTML = `
     <div class="lobby">
       <div class="lobby-header">
@@ -10,41 +15,45 @@ export function createLobbyScreen(container, onGameStart) {
           <label for="player-name">Your Name</label>
           <input type="text" id="player-name" maxlength="20" placeholder="Enter your name" autocomplete="off">
         </div>
-        <div class="lobby-actions">
-          <button id="btn-create-room" class="btn btn-primary">Create Room</button>
-          <div class="divider"><span>or</span></div>
-          <div class="join-row">
-            <input type="text" id="room-code" maxlength="8" placeholder="Room code" autocomplete="off">
-            <button id="btn-join-room" class="btn btn-secondary">Join</button>
-          </div>
-          <div class="room-browser">
-            <div class="divider"><span>or browse rooms</span></div>
-            <div id="room-list" class="room-list">
-              <p class="room-list-empty">No rooms available. Create one to start playing.</p>
-            </div>
-          </div>
+
+        <div class="field">
+          <label for="difficulty">Opponent Skill</label>
+          <select id="difficulty" style="background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 0.75rem 1rem; font-size: 0.95rem; outline: none; border-radius: 8px;">
+            <option value="easy">Easy — Conservative & Random</option>
+            <option value="normal" selected>Normal — Balanced Strategy</option>
+            <option value="hard">Hard — Aggressive & Calculated</option>
+          </select>
         </div>
-        <div id="room-code-display" class="room-code-display hidden">
-          <p>Share this code with your opponent:</p>
-          <div class="code" id="room-code-value"></div>
-          <p class="waiting">Waiting for opponent to join...</p>
-        </div>
-        <div id="lobby-status" class="lobby-status hidden"></div>
+
+        <button id="btn-start-duel" class="btn btn-primary" disabled>Start Duel</button>
       </div>
+      <div id="lobby-status" class="lobby-status hidden"></div>
     </div>
   `
 
   const nameInput = container.querySelector('#player-name')
-  const createBtn = container.querySelector('#btn-create-room')
-  const roomCodeInput = container.querySelector('#room-code')
-  const joinBtn = container.querySelector('#btn-join-room')
-  const roomCodeDisplay = container.querySelector('#room-code-display')
-  const roomCodeValue = container.querySelector('#room-code-value')
+  const diffSelect = container.querySelector('#difficulty')
+  const startBtn = container.querySelector('#btn-start-duel')
   const statusEl = container.querySelector('#lobby-status')
 
-  function generateCode() {
-    return Math.random().toString(36).substring(2, 8).toUpperCase()
+  function checkName() {
+    startBtn.disabled = !nameInput.value.trim()
   }
+  nameInput.addEventListener('input', checkName)
+  nameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !startBtn.disabled) startBtn.click()
+  })
+
+  startBtn.addEventListener('click', () => {
+    const name = nameInput.value.trim()
+    if (!name) {
+      showStatus('Enter your name', true)
+      return
+    }
+    const difficulty = diffSelect.value
+    showStatus('Loading market data...', false)
+    onStartGame(name, difficulty)
+  })
 
   function showStatus(msg, isError) {
     statusEl.textContent = msg
@@ -52,31 +61,5 @@ export function createLobbyScreen(container, onGameStart) {
     statusEl.classList.remove('hidden')
   }
 
-  createBtn.addEventListener('click', () => {
-    const name = nameInput.value.trim()
-    if (!name) { showStatus('Enter your name', true); return }
-    const code = generateCode()
-    roomCodeValue.textContent = code
-    roomCodeDisplay.classList.remove('hidden')
-    createBtn.disabled = true
-    nameInput.disabled = true
-    showStatus('Room created!')
-    onGameStart(name, code, 'host')
-  })
-
-  joinBtn.addEventListener('click', () => {
-    const name = nameInput.value.trim()
-    const code = roomCodeInput.value.trim().toUpperCase()
-    if (!name) { showStatus('Enter your name', true); return }
-    if (!code) { showStatus('Enter a room code', true); return }
-    onGameStart(name, code, 'guest')
-  })
-
-  roomCodeInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') joinBtn.click()
-  })
-
-  nameInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') createBtn.click()
-  })
+  nameInput.focus()
 }
