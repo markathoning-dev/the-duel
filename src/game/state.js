@@ -22,6 +22,7 @@ export function createPlayerState(id, name) {
     initialCapital: 100000,
     cash: 0,
     units: {},
+    currentAllocation: {},
     allocations: [],
     totalReturn: 0,
     portfolioImpurity: 0,
@@ -58,6 +59,7 @@ export function processAllocation(state, playerId, allocation) {
   }
 
   player.units = computeUnits(investCapital, assetAlloc, prices)
+  player.currentAllocation = allocation
   player.allocations.push(allocation)
 }
 
