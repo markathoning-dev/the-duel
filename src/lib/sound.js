@@ -33,3 +33,6 @@ export function playAlert() { playTone(440, 0.3, 'sawtooth', 0.2) }
 export function playVictory() {
   [523, 659, 784].forEach((f, i) => setTimeout(() => playTone(f, 0.2, 'sine', 0.25), i * 150))
 }
+export function playChime() {
+  [784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 0.12, 'sine', 0.15), i * 80))
+}

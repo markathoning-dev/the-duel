@@ -11,7 +11,7 @@ import { loadGameSeed } from './game/data-loader.js'
 import { createBot } from './game/bot.js'
 import { showOnboarding } from './ui/onboarding.js'
 import { renderSpectatorDashboard, isSpectator, getSpectateCode } from './ui/spectator.js'
-import { playTick, playConfirm, playAlert, playVictory } from './lib/sound.js'
+import { playTick, playConfirm, playAlert, playVictory, playChime } from './lib/sound.js'
 
 const SCREENS = ['lobby', 'game', 'results']
 
@@ -157,7 +157,7 @@ function wireEngine() {
   })
 
   engine.on('allocation-submitted', () => {
-    playConfirm()
+    playConfirm(); playChime()
   })
 
   engine.on('rebalance-start', () => {
