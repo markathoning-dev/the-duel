@@ -3,6 +3,7 @@ import { createLobbyScreen } from './ui/lobby.js'
 import { createDashboard } from './ui/dashboard.js'
 import { createAllocator } from './ui/allocator.js'
 import { createCountdown } from './ui/countdown.js'
+import { createPortfolioMeter } from './ui/portfolio-meter.js'
 import { createResultsScreen } from './ui/results.js'
 import { showRecap } from './ui/recap.js'
 import { createGameEngine } from './game/engine.js'
@@ -16,6 +17,7 @@ const SCREENS = ['lobby', 'game', 'results']
 
 let engine
 let countdownControl
+let portfolioMeter
 let bot
 let localPlayerId = 'p1'
 let opponentPlayerId = 'p2'
@@ -31,32 +33,69 @@ function buildGameScreen() {
   const container = document.getElementById('screen-game')
   container.innerHTML = `
     <div class="game-layout">
-      <div class="dash-panel" id="dash-panel"></div>
-      <div class="side-panel" id="side-panel"></div>
+      <div class="game-header" id="game-header"></div>
+      <div class="game-main">
+        <div class="dash-panel" id="dash-panel"></div>
+        <div class="command-panel" id="command-panel"></div>
+      </div>
     </div>
   `
 }
 
 function renderTurn() {
   const state = engine.getState()
-  const sidePanel = document.getElementById('side-panel')
+  const header = document.getElementById('game-header')
   const dashPanel = document.getElementById('dash-panel')
+  const commandPanel = document.getElementById('command-panel')
   const local = state.players.local
   const opponent = state.players.opponent
 
-  sidePanel.innerHTML = `
-    <div class="turn-info">
-      <div>
-        <span class="player-name">${local.name}</span>
-        <span class="capital">$${Math.round(local.capital).toLocaleString()}</span>
+  // Header
+  header.innerHTML = `
+    <div class="gh-player">
+      <span class="gh-player-name">${local.name}</span>
+      <span class="gh-player-badge">You</span>
+      <span class="gh-capital-label">Cap</span>
+      <span class="gh-capital" id="gh-capital">$${Math.round(local.capital).toLocaleString()}</span>
+    </div>
+    <div class="gh-center">
+      <div class="gh-quarter">
+        Quarter
+        <span class="gh-quarter-num" id="gh-quarter-num">${state.currentQuarter + 1}</span>
       </div>
-      <div style="text-align:right;font-size:0.8rem;color:var(--text-muted)">
-        vs ${opponent.name} (${botDifficulty})
+      <span class="gh-vs">⚔ vs</span>
+      <div class="gh-quarter" style="color:var(--text-muted)">
+        <span id="gh-opponent-header">${opponent.name}</span>
+        <span class="gh-difficulty">${botDifficulty}</span>
       </div>
     </div>
-    <div id="countdown-container"></div>
-    <div id="allocator-container"></div>
+    <div class="gh-opponent">
+      <span class="gh-player-name">${opponent.name}</span>
+      <span class="gh-difficulty">${botDifficulty}</span>
+    </div>
   `
+
+  // Command panel
+  commandPanel.innerHTML = `
+    <div class="cp-section">
+      <div class="cp-label">Portfolio</div>
+      <div id="portfolio-meter-container"></div>
+    </div>
+    <div class="cp-section">
+      <div class="cp-label">Time</div>
+      <div id="countdown-container"></div>
+    </div>
+    <div class="cp-section" style="flex:1;overflow-y:auto">
+      <div class="allocator-header">
+        <h3>Allocate</h3>
+      </div>
+      <div id="allocator-container"></div>
+    </div>
+  `
+
+  const pmContainer = document.getElementById('portfolio-meter-container')
+  portfolioMeter = createPortfolioMeter(pmContainer, localPlayerId, engine)
+  portfolioMeter.update(state)
 
   const countdownContainer = document.getElementById('countdown-container')
   countdownControl = createCountdown(countdownContainer, state.isRebalancing ? 30 : state.turnDuration)
@@ -67,7 +106,6 @@ function renderTurn() {
   if (state.isRebalancing) {
     createAllocator(allocContainer, state.gameData.assets, lastAlloc, (allocation) => {
       engine.submitRebalance(localPlayerId, allocation)
-      // Bot auto-submits rebalance too
       setTimeout(() => {
         if (bot) {
           const botAlloc = bot.makeDecision(state)
@@ -99,7 +137,6 @@ function wireEngine() {
   })
 
   engine.on('quarter-start', () => {
-    // Bot makes its decision shortly after each quarter starts
     setTimeout(() => {
       if (!bot) return
       const state = engine.getState()
@@ -120,8 +157,6 @@ function wireEngine() {
   })
 
   engine.on('allocation-submitted', () => {
-    const btn = document.querySelector('.allocator .btn')
-    if (btn) btn.disabled = true
     playConfirm()
   })
 
@@ -136,6 +171,12 @@ function wireEngine() {
 
   engine.on('rebalance-tick', (seconds) => {
     if (countdownControl) countdownControl.update(seconds)
+  })
+
+  engine.on('tick', (data) => {
+    if (portfolioMeter) {
+      portfolioMeter.update(engine.getState())
+    }
   })
 
   engine.on('game-over', () => {
@@ -155,7 +196,6 @@ async function startDuel(playerName, difficulty) {
 
     engine.joinOpponent(opponentPlayerId, bot.getName())
 
-    // Bot makes its first decision shortly after Q1 starts
     setTimeout(() => {
       if (!bot) return
       const state = engine.getState()

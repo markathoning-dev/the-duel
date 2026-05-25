@@ -1,8 +1,3 @@
-/**
- * Lobby screen — enter your name, pick difficulty, start duel.
- * Single-player vs AI opponent. No networking needed.
- */
-
 export function createLobbyScreen(container, onStartGame) {
   container.innerHTML = `
     <div class="lobby">
@@ -18,7 +13,7 @@ export function createLobbyScreen(container, onStartGame) {
 
         <div class="field">
           <label for="difficulty">Opponent Skill</label>
-          <select id="difficulty" style="background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 0.75rem 1rem; font-size: 0.95rem; outline: none; border-radius: 8px;">
+          <select id="difficulty">
             <option value="easy">Easy — Conservative & Random</option>
             <option value="normal" selected>Normal — Balanced Strategy</option>
             <option value="hard">Hard — Aggressive & Calculated</option>

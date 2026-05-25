@@ -10,7 +10,7 @@ export function renderLineChart(canvas, prices, options = {}) {
   const rect = canvas.parentElement.getBoundingClientRect()
   const dpr = window.devicePixelRatio || 1
   const width = rect.width
-  const height = options.height || 120
+  const height = options.height || 80
 
   canvas.width = width * dpr
   canvas.height = height * dpr
@@ -18,7 +18,7 @@ export function renderLineChart(canvas, prices, options = {}) {
   canvas.style.height = height + 'px'
   ctx.scale(dpr, dpr)
 
-  const pad = { top: 8, right: 8, bottom: 16, left: 40 }
+  const pad = { top: 6, right: 4, bottom: 12, left: 32 }
   const chartW = width - pad.left - pad.right
   const chartH = height - pad.top - pad.bottom
 
@@ -31,44 +31,44 @@ export function renderLineChart(canvas, prices, options = {}) {
   const draw = (progress) => {
     ctx.clearRect(0, 0, width, height)
 
-    ctx.strokeStyle = 'rgba(42, 42, 58, 0.5)'
+    // Grid lines
+    ctx.strokeStyle = 'rgba(26, 47, 56, 0.4)'
     ctx.lineWidth = 1
-    for (let i = 0; i < 4; i++) {
-      const y = pad.top + (chartH / 3) * i
+    for (let i = 0; i < 3; i++) {
+      const y = pad.top + (chartH / 2) * i
       ctx.beginPath()
       ctx.moveTo(pad.left, y)
       ctx.lineTo(width - pad.right, y)
       ctx.stroke()
     }
 
-    const color = options.color || '#4ade80'
-    const gradient = ctx.createLinearGradient(0, pad.top, 0, height - pad.bottom)
-    gradient.addColorStop(0, color + '33')
-    gradient.addColorStop(1, color + '02')
-
-    const drawCount = Math.max(2, Math.floor(prices.length * progress))
-
-    ctx.beginPath()
-    for (let i = 0; i < drawCount; i++) {
-      const x = pad.left + (i / (prices.length - 1)) * chartW
-      const y = pad.top + chartH - ((prices[i] - min) / range) * chartH
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+    // Y-axis labels
+    ctx.fillStyle = '#3d555e'
+    ctx.font = '8px DM Mono, monospace'
+    ctx.textAlign = 'right'
+    ctx.textBaseline = 'middle'
+    for (let i = 0; i < 3; i++) {
+      const val = max - (range / 2) * i
+      const y = pad.top + (chartH / 2) * i
+      ctx.fillText(val.toFixed(0), pad.left - 4, y)
     }
-    ctx.strokeStyle = color
-    ctx.lineWidth = 1.5
-    ctx.stroke()
 
-    const lastX = pad.left + ((drawCount - 1) / (prices.length - 1)) * chartW
-    const lastY = pad.top + chartH - ((prices[drawCount - 1] - min) / range) * chartH
-    ctx.lineTo(lastX, height - pad.bottom)
-    ctx.lineTo(pad.left, height - pad.bottom)
-    ctx.closePath()
-    ctx.fillStyle = gradient
-    ctx.fill()
+    const color = options.color || '#c8a45e'
 
+    // Parse RGB for gradient
+    let r = 200, g = 164, b = 94
+    if (color === '#4ecb8d' || color === '#a3e635') { r = 78; g = 203; b = 141 }
+    else if (color === '#facc15' || color === '#e0a84c') { r = 224; g = 168; b = 76 }
+    else if (color === '#ef4444') { r = 212; g = 96; b = 90 }
+
+    const gradient = ctx.createLinearGradient(0, pad.top, 0, height - pad.bottom)
+    gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.08)`)
+    gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.01)`)
+
+    // Quarter boundaries
     if (options.boundaries) {
-      ctx.strokeStyle = 'rgba(245, 158, 11, 0.3)'
-      ctx.setLineDash([3, 3])
+      ctx.strokeStyle = 'rgba(200, 164, 94, 0.08)'
+      ctx.setLineDash([2, 3])
       options.boundaries.forEach(b => {
         const idx = Math.min(b, prices.length - 1)
         const x = pad.left + (idx / (prices.length - 1)) * chartW
@@ -80,30 +80,10 @@ export function renderLineChart(canvas, prices, options = {}) {
       ctx.setLineDash([])
     }
 
-    if (options.events && options.quarterBoundaries) {
-      options.events.forEach(e => {
-        const dayIndex = options.quarterBoundaries[e.quarter]
-        if (dayIndex == null || dayIndex >= prices.length) return
-        const x = pad.left + (dayIndex / (prices.length - 1)) * chartW
-        ctx.strokeStyle = 'rgba(239, 68, 68, 0.5)'
-        ctx.lineWidth = 2
-        ctx.setLineDash([6, 4])
-        ctx.beginPath()
-        ctx.moveTo(x, pad.top)
-        ctx.lineTo(x, height - pad.bottom)
-        ctx.stroke()
-        ctx.setLineDash([])
-        ctx.fillStyle = '#ef4444'
-        ctx.font = '9px sans-serif'
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'bottom'
-        ctx.fillText('\u26A1', x, pad.top - 2)
-      })
-    }
-
+    // Current quarter marker
     if (options.currentQuarter != null && options.currentQuarter > 0) {
       const x = pad.left + (options.quarterBoundaries[options.currentQuarter] / (prices.length - 1)) * chartW
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)'
+      ctx.strokeStyle = 'rgba(200, 164, 94, 0.1)'
       ctx.lineWidth = 1
       ctx.beginPath()
       ctx.moveTo(x, pad.top)
@@ -111,14 +91,61 @@ export function renderLineChart(canvas, prices, options = {}) {
       ctx.stroke()
     }
 
-    ctx.fillStyle = '#8888a0'
-    ctx.font = '10px sans-serif'
-    ctx.textAlign = 'right'
-    ctx.textBaseline = 'middle'
-    for (let i = 0; i < 4; i++) {
-      const val = max - (range / 3) * i
-      const y = pad.top + (chartH / 3) * i
-      ctx.fillText(val.toFixed(0), pad.left - 6, y)
+    const drawCount = Math.max(2, Math.floor(prices.length * progress))
+
+    // Draw filled area
+    ctx.beginPath()
+    for (let i = 0; i < drawCount; i++) {
+      const x = pad.left + (i / (prices.length - 1)) * chartW
+      const y = pad.top + chartH - ((prices[i] - min) / range) * chartH
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+    }
+    const lastX = pad.left + ((drawCount - 1) / (prices.length - 1)) * chartW
+    const lastY = pad.top + chartH - ((prices[drawCount - 1] - min) / range) * chartH
+    ctx.lineTo(lastX, height - pad.bottom)
+    ctx.lineTo(pad.left, height - pad.bottom)
+    ctx.closePath()
+    ctx.fillStyle = gradient
+    ctx.fill()
+
+    // Line with glow
+    ctx.save()
+    ctx.shadowColor = color
+    ctx.shadowBlur = 6
+    ctx.globalAlpha = 0.3
+    ctx.beginPath()
+    for (let i = 0; i < drawCount; i++) {
+      const x = pad.left + (i / (prices.length - 1)) * chartW
+      const y = pad.top + chartH - ((prices[i] - min) / range) * chartH
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+    }
+    ctx.strokeStyle = color
+    ctx.lineWidth = 1.5
+    ctx.stroke()
+    ctx.restore()
+
+    // Crisp line
+    ctx.beginPath()
+    for (let i = 0; i < drawCount; i++) {
+      const x = pad.left + (i / (prices.length - 1)) * chartW
+      const y = pad.top + chartH - ((prices[i] - min) / range) * chartH
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+    }
+    ctx.strokeStyle = color
+    ctx.lineWidth = 1.5
+    ctx.stroke()
+
+    // End dot
+    if (drawCount > 0) {
+      const endX = pad.left + ((drawCount - 1) / (prices.length - 1)) * chartW
+      const endY = pad.top + chartH - ((prices[drawCount - 1] - min) / range) * chartH
+      ctx.beginPath()
+      ctx.arc(endX, endY, 2.5, 0, Math.PI * 2)
+      ctx.fillStyle = '#04080a'
+      ctx.fill()
+      ctx.strokeStyle = color
+      ctx.lineWidth = 1.5
+      ctx.stroke()
     }
   }
 

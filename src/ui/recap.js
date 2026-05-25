@@ -90,9 +90,9 @@ export function showRecap(container, state) {
 
 function eventIcon(type) {
   const icons = {
-    rate_decision: '\uD83C\uDFE6',
+    rate_decision: '\u{1F3E6}',
     sector_shock: '\u26A1',
     regulatory_change: '\u2696\uFE0F'
   }
-  return icons[type] || '\uD83D\uDCE2'
+  return icons[type] || '\u{1F4E2}'
 }

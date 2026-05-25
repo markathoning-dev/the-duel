@@ -1,6 +1,7 @@
 export function createCountdown(container, duration, onTick, onExpire) {
   container.innerHTML = `
-    <div class="countdown">
+    <div class="countdown-section">
+      <span class="countdown-label">Remaining</span>
       <div class="countdown-bar">
         <div class="countdown-fill" id="countdown-fill"></div>
       </div>
@@ -17,7 +18,17 @@ export function createCountdown(container, duration, onTick, onExpire) {
     const pct = (seconds / duration) * 100
     fill.style.width = pct + '%'
     text.textContent = seconds + 's'
-    fill.style.background = seconds <= 10 ? 'var(--danger)' : seconds <= 20 ? 'var(--warn)' : 'var(--accent)'
+
+    if (seconds <= 5) {
+      fill.style.background = 'var(--red)'
+      text.style.color = 'var(--red)'
+    } else if (seconds <= 15) {
+      fill.style.background = 'var(--warn)'
+      text.style.color = 'var(--warn)'
+    } else {
+      fill.style.background = ''
+      text.style.color = ''
+    }
     if (onTick) onTick(seconds)
   }
 

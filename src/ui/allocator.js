@@ -5,9 +5,9 @@ export function createAllocator(container, assets, currentAllocation, onSubmit, 
 
   const isRebalance = options.isRebalance || false
 
-  const header = document.createElement('h3')
-  header.textContent = isRebalance ? 'Rebalance Your Portfolio (30s)' : 'Allocate Your Capital'
-  alloc.appendChild(header)
+  const rowsDiv = document.createElement('div')
+  rowsDiv.className = 'alloc-rows'
+  alloc.appendChild(rowsDiv)
 
   const remaining = document.createElement('div')
   remaining.className = 'remaining'
@@ -44,28 +44,30 @@ export function createAllocator(container, assets, currentAllocation, onSubmit, 
 
     const impurity = document.createElement('span')
     impurity.className = 'alloc-impurity'
-    impurity.textContent = `${(asset.impurityRatio * 100).toFixed(0)}% imp.`
+    impurity.textContent = `${(asset.impurityRatio * 100).toFixed(0)}%`
     row.appendChild(impurity)
 
-    alloc.appendChild(row)
+    rowsDiv.appendChild(row)
 
     slider.addEventListener('input', () => {
       const oldVal = allocState[asset.id] || 0
       const newVal = +slider.value / 100
       allocState[asset.id] = newVal
       totalPct = totalPct - oldVal + newVal
-      document.getElementById(`pct-${asset.id}`).textContent = `${(newVal * 100).toFixed(0)}%`
+      const pctEl = document.getElementById(`pct-${asset.id}`)
+      if (pctEl) pctEl.textContent = `${(newVal * 100).toFixed(0)}%`
       updateRemaining()
     })
   })
 
+  // Cash row
   const cashRow = document.createElement('div')
   cashRow.className = 'alloc-row'
   const cashLabel = document.createElement('div')
   cashLabel.className = 'alloc-label'
   const cashPct = allocState.cash || 0
   cashLabel.innerHTML = `
-    <span class="alloc-name">Cash / Uninvested</span>
+    <span class="alloc-name">Cash</span>
     <span class="alloc-pct" id="pct-cash">${(cashPct * 100).toFixed(0)}%</span>
   `
   cashRow.appendChild(cashLabel)
@@ -78,9 +80,9 @@ export function createAllocator(container, assets, currentAllocation, onSubmit, 
   cashRow.appendChild(cashSlider)
   const cashInfo = document.createElement('span')
   cashInfo.className = 'alloc-impurity'
-  cashInfo.textContent = '0% imp. (risk-free)'
+  cashInfo.textContent = '0%'
   cashRow.appendChild(cashInfo)
-  alloc.appendChild(cashRow)
+  rowsDiv.appendChild(cashRow)
 
   cashSlider.addEventListener('input', () => {
     const oldVal = allocState.cash || 0
@@ -93,13 +95,13 @@ export function createAllocator(container, assets, currentAllocation, onSubmit, 
 
   function updateRemaining() {
     const left = 1 - totalPct
-    remaining.textContent = `Remaining: ${(left * 100).toFixed(0)}%`
+    remaining.textContent = `Unallocated: ${(left * 100).toFixed(0)}%`
     remaining.className = 'remaining' + (left < 0 ? ' over' : '')
   }
   updateRemaining()
 
   const submitBtn = document.createElement('button')
-  submitBtn.className = 'btn btn-primary'
+  submitBtn.className = 'btn btn-primary alloc-submit-btn'
   submitBtn.textContent = isRebalance ? 'Confirm Rebalance' : 'Submit Allocation'
   submitBtn.addEventListener('click', () => {
     const pctDiff = Math.abs(1 - totalPct)

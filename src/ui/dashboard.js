@@ -20,18 +20,28 @@ export function createDashboard(container, gameData, currentQuarter) {
   const grid = document.createElement('div')
   grid.className = 'asset-grid'
 
-  const boundaries = gameData.quarterBoundaries.slice(1, -1)
-
   gameData.assets.forEach((asset, i) => {
+    const purityColor = impurityColor(asset.impurityRatio)
+
     const card = document.createElement('div')
     card.className = 'asset-card'
-    const complianceScore = asset.complianceScores ? asset.complianceScores[currentQuarter] : null
+    card.dataset.assetId = asset.id
+
+    const endIdx = gameData.quarterBoundaries[currentQuarter + 1]
+    const visiblePrices = asset.prices.slice(0, endIdx)
+    const currentPrice = visiblePrices.length > 0 ? visiblePrices[visiblePrices.length - 1] : 0
+
     card.innerHTML = `
-      <div class="asset-info">
+      <div class="asset-top">
         <span class="asset-name">${asset.name}</span>
         <span class="asset-type">${asset.type}</span>
-        <span class="asset-impurity">Impurity: ${(asset.impurityRatio * 100).toFixed(0)}%</span>
-        ${complianceScore != null ? `<span class="asset-compliance" style="color:${complianceColor(complianceScore)}">Compliance: ${(complianceScore * 100).toFixed(0)}%</span>` : ''}
+        <span class="asset-impurity">
+          <span class="asset-impurity-dot" style="background:${purityColor}"></span>
+          ${(asset.impurityRatio * 100).toFixed(0)}%
+        </span>
+      </div>
+      <div class="asset-price-row">
+        <span class="asset-price" id="price-${asset.id}">$${currentPrice.toFixed(2)}</span>
       </div>
       <div class="chart-wrap">
         <canvas data-asset="${asset.id}"></canvas>
@@ -41,36 +51,13 @@ export function createDashboard(container, gameData, currentQuarter) {
     container.appendChild(grid)
 
     const canvas = card.querySelector('canvas')
-    const visiblePrices = asset.prices.slice(0, gameData.quarterBoundaries[currentQuarter + 1])
 
     renderLineChart(canvas, visiblePrices, {
-      color: impurityColor(asset.impurityRatio),
-      boundaries,
-      currentQuarter,
-      quarterBoundaries: gameData.quarterBoundaries,
-      events: gameData.events || [],
-    })
-
-    const scrubberContainer = card.querySelector('.chart-wrap')
-    renderLineChartScrubber(scrubberContainer, asset.prices, {
-      color: impurityColor(asset.impurityRatio),
-      boundaries,
+      color: purityColor,
+      boundaries: gameData.quarterBoundaries.slice(1, -1),
       currentQuarter,
       quarterBoundaries: gameData.quarterBoundaries,
       events: gameData.events || [],
     })
   })
-}
-
-function complianceColor(score) {
-  if (score >= 0.95) return '#4ade80'
-  if (score >= 0.8) return '#facc15'
-  return '#ef4444'
-}
-
-function impurityColor(ratio) {
-  if (ratio === 0) return '#4ade80'
-  if (ratio < 0.03) return '#a3e635'
-  if (ratio < 0.06) return '#facc15'
-  return '#ef4444'
 }

@@ -8,7 +8,7 @@ export function createResultsScreen(container, state, onPlayAgain) {
       <div class="results-header">
         <h1>Game Over</h1>
         <div class="winner-banner">
-          ${winner === 'draw' ? 'It\'s a draw!' : `${winner === local.id ? local.name : opponent.name} wins!`}
+          ${winner === 'draw' ? "It's a draw!" : `${winner === local.id ? local.name : opponent.name} wins!`}
         </div>
       </div>
       <div class="results-grid">
