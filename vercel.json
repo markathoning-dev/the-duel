@@ -1,13 +1,6 @@
 {
-  "experimentalServices": {
-    "frontend": {
-      "routePrefix": "/",
-      "framework": "vite"
-    },
-    "backend": {
-      "root": "backend",
-      "entrypoint": "main:app",
-      "routePrefix": "/_/backend"
-    }
-  }
+  "framework": "vite",
+  "buildCommand": "vite build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install"
 }
